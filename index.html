@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kuis PAI SMP Negeri Kota Demak</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Nunito', system-ui, sans-serif; background:#eef6f1; color:#16352a; }
+  /* Teks Arab: font Amiri, rata kanan, ukuran besar agar harakat terbaca */
+  .arab { font-family:'Amiri','Scheherazade New',serif; direction:rtl; text-align:right; font-size:1.8rem; line-height:2.6rem; background:#f3faf6; border-right:4px solid #1f7a54; padding:.6rem 1rem; border-radius:.5rem; margin:.6rem 0; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ============================================================
+  1. KONFIGURASI (edit di sini)
+============================================================ -->
+<script>
+  // URL Web App Google Apps Script (harus diapit tanda kutip, diakhiri titik koma)
+  const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbyFljIipgojtQ6vVHJkNHp-5XPUVNZk9FT1qOFvCeHoHEPBWoAALy6eSD7mkNeZ99qd/exec";
+  // Nama sekolah di judul halaman
+  const NAMA_SEKOLAH = "SMP Negeri Kota Demak";
+</script>
+
+<!-- ============================================================
+  2. BANK SOAL
+  Format tiap soal:
+  { q:"Pertanyaan", arab:"teks Arab (boleh dikosongkan: '')",
+    opsi:["A","B","C","D"], kunci:0, bahas:"Penjelasan singkat" }
+  kunci: 0 = A, 1 = B, 2 = C, 3 = D
+  Jumlah soal bebas; nilai dihitung 100 / jumlah soal (50 soal = 2 poin per soal).
+============================================================ -->
+<script>
+const soalKelas7 = [
+  { q:"Asmaul Husna \"Ar-Rahman\" (الرَّحْمٰنُ) memiliki arti ...", arab:"الرَّحْمٰنُ",
+    opsi:["Maha Pengasih","Maha Mengetahui","Maha Melihat","Maha Perkasa"], kunci:0,
+    bahas:"Ar-Rahman berarti Maha Pengasih, yaitu kasih sayang Allah yang meliputi seluruh makhluk di dunia." },
+  { q:"Kandungan utama QS. Al-Ikhlas ayat 1 adalah ...", arab:"قُلْ هُوَ اللّٰهُ اَحَدٌ",
+    opsi:["Allah memiliki anak","Allah Maha Esa","Allah beranak dan diperanakkan","Allah butuh pertolongan"], kunci:1,
+    bahas:"Ayat tersebut berarti \"Katakanlah, Dialah Allah Yang Maha Esa\", menegaskan tauhid." },
+  { q:"Hadis berikut mengajarkan pentingnya ...", arab:"الطُّهُورُ شَطْرُ الْإِيمَانِ",
+    opsi:["Kekayaan","Kebersihan/kesucian","Kekuatan fisik","Kepandaian berbicara"], kunci:1,
+    bahas:"Hadis riwayat Muslim ini berarti \"Kesucian (kebersihan) adalah sebagian dari iman\"." },
+
+  // >>> TEMPEL SOAL KELAS 7 NOMOR 4 - 50 DI BAWAH INI (pisahkan tiap soal dengan koma) <<<
+  // ===== SOAL KELAS 7 : NOMOR 4 - 50 (47 soal) =====
+// Tempel SEMUA isi file ini tepat di bawah komentar ">>> TEMPEL SOAL KELAS 7 ..." di dalam const soalKelas7 = [ ... ]
+// kunci: 0=A, 1=B, 2=C, 3=D
+
+// Soal 4
+{ q:"Rukun Islam berjumlah ...", arab:"", opsi:["4","5","6","7"], kunci:1, bahas:"Rukun Islam ada 5: syahadat, shalat, zakat, puasa Ramadan, dan haji bagi yang mampu." },
+// Soal 5
+{ q:"Rukun iman berjumlah ...", arab:"", opsi:["4","5","6","7"], kunci:2, bahas:"Rukun iman ada 6: iman kepada Allah, malaikat, kitab, rasul, hari akhir, serta qada dan qadar." },
+// Soal 6
+{ q:"Iman menurut pemahaman Ahlussunnah adalah ...", arab:"", opsi:["Hanya diucapkan dengan lisan","Hanya diyakini dalam hati","Hanya dilakukan dengan perbuatan","Diyakini dalam hati, diucapkan dengan lisan, dan diamalkan dengan perbuatan"], kunci:3, bahas:"Iman mencakup keyakinan hati, ucapan lisan, dan amal perbuatan." },
+// Soal 7
+{ q:"Asmaul Husna \"Al-Khaliq\" berarti ...", arab:"الْخَالِقُ", opsi:["Maha Pencipta","Maha Pemberi Rezeki","Maha Mendengar","Maha Kuasa"], kunci:0, bahas:"Al-Khaliq berarti Maha Pencipta. Semua makhluk diciptakan oleh Allah." },
+// Soal 8
+{ q:"Asmaul Husna \"Ar-Razzaq\" berarti ...", arab:"الرَّزَّاقُ", opsi:["Maha Penyayang","Maha Pengampun","Maha Pemberi Rezeki","Maha Bijaksana"], kunci:2, bahas:"Ar-Razzaq berarti Maha Pemberi Rezeki." },
+// Soal 9
+{ q:"Asmaul Husna \"As-Sami'\" berarti ...", arab:"السَّمِيْعُ", opsi:["Maha Melihat","Maha Mendengar","Maha Mengetahui","Maha Pemurah"], kunci:1, bahas:"As-Sami' berarti Maha Mendengar, sehingga kita harus menjaga ucapan." },
+// Soal 10
+{ q:"Nama Allah yang berarti Maha Mengetahui adalah ...", arab:"", opsi:["Al-Ghaffar","Al-Hakim","Al-Qawiy","Al-'Alim"], kunci:3, bahas:"Al-'Alim berarti Maha Mengetahui. Al-Ghaffar Maha Pengampun, Al-Hakim Maha Bijaksana, Al-Qawiy Maha Kuat." },
+// Soal 11
+{ q:"Kalimat tersebut disebut ...", arab:"أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا رَسُوْلُ اللّٰهِ", opsi:["Basmalah","Hamdalah","Syahadatain","Istighfar"], kunci:2, bahas:"Itulah dua kalimat syahadat, rukun Islam yang pertama." },
+// Soal 12
+{ q:"Rukun iman yang pertama adalah iman kepada ...", arab:"", opsi:["Allah","Malaikat","Rasul","Hari akhir"], kunci:0, bahas:"Urutan rukun iman dimulai dari iman kepada Allah." },
+// Soal 13
+{ q:"Iman kepada kitab-kitab Allah merupakan rukun iman yang ke ...", arab:"", opsi:["1","2","3","4"], kunci:2, bahas:"Urutannya: Allah (1), malaikat (2), kitab (3), rasul (4), hari akhir (5), qada-qadar (6)." },
+// Soal 14
+{ q:"Sifat wajib Allah \"Qidam\" berarti ...", arab:"", opsi:["Ada","Terdahulu, tidak ada awalnya","Kekal","Berdiri sendiri"], kunci:1, bahas:"Qidam berarti terdahulu. Wujud berarti ada, Baqa berarti kekal, Qiyamuhu binafsihi berarti berdiri sendiri." },
+// Soal 15
+{ q:"Ayat ini mengajarkan kita untuk ...", arab:"اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ", opsi:["Memuji dan bersyukur kepada Allah","Meminta harta","Menjauhi teman","Menunda shalat"], kunci:0, bahas:"QS Al-Fatihah ayat 2 berarti \"Segala puji bagi Allah, Tuhan semesta alam\"." },
+// Soal 16
+{ q:"Surah Al-Fatihah juga dikenal dengan nama ...", arab:"", opsi:["Al-Kautsar","Ummul Kitab","Yasin","An-Nas"], kunci:1, bahas:"Al-Fatihah disebut Ummul Kitab (induk Al-Qur'an)." },
+// Soal 17
+{ q:"Surah Al-Fatihah terdiri atas ... ayat.", arab:"", opsi:["5","6","8","7"], kunci:3, bahas:"Al-Fatihah terdiri atas 7 ayat." },
+// Soal 18
+{ q:"Ayat ini berarti Allah adalah ...", arab:"اَللّٰهُ الصَّمَدُ", opsi:["Yang memiliki sekutu","Yang beranak","Tempat bergantung segala sesuatu","Yang diperanakkan"], kunci:2, bahas:"QS Al-Ikhlas ayat 2: Allah tempat bergantung segala sesuatu." },
+// Soal 19
+{ q:"Kata \"iqra'\" pada ayat tersebut berarti ...", arab:"اِقْرَأْ بِاسْمِ رَبِّكَ الَّذِيْ خَلَقَ", opsi:["Bacalah","Tulislah","Berdirilah","Dengarkanlah"], kunci:0, bahas:"QS Al-'Alaq ayat 1 adalah wahyu pertama. Iqra' berarti bacalah." },
+// Soal 20
+{ q:"Wahyu pertama diterima Nabi Muhammad saw. di ...", arab:"", opsi:["Gua Tsur","Gua Hira","Padang Arafah","Masjid Nabawi"], kunci:1, bahas:"Wahyu pertama diterima di Gua Hira melalui Malaikat Jibril." },
+// Soal 21
+{ q:"Jumlah huruf hijaiyah pokok adalah ...", arab:"", opsi:["28","30","26","24"], kunci:0, bahas:"Huruf hijaiyah pokok berjumlah 28 (sebagian ulama menghitung 29 dengan lam alif)." },
+// Soal 22
+{ q:"Hadis tersebut menjelaskan bahwa sebaik-baik manusia adalah yang ...", arab:"خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ", opsi:["Paling kaya","Paling kuat","Belajar dan mengajarkan Al-Qur'an","Paling banyak bicara"], kunci:2, bahas:"Hadis riwayat Bukhari: sebaik-baik kalian adalah yang mempelajari Al-Qur'an dan mengajarkannya." },
+// Soal 23
+{ q:"Thaharah artinya ...", arab:"", opsi:["Berdoa","Bersuci","Berzakat","Bersedekah"], kunci:1, bahas:"Thaharah berarti bersuci dari hadas dan najis." },
+// Soal 24
+{ q:"Rukun wudu yang pertama adalah ...", arab:"", opsi:["Membasuh muka","Membasuh kedua tangan","Niat","Mengusap kepala"], kunci:2, bahas:"Rukun wudu pertama adalah niat, dilakukan bersamaan dengan membasuh muka." },
+// Soal 25
+{ q:"Berikut ini yang tidak membatalkan wudu adalah ...", arab:"", opsi:["Buang angin","Tidur nyenyak","Keluar air kencing","Makan nasi"], kunci:3, bahas:"Makan tidak membatalkan wudu. Buang angin, tidur nyenyak, dan buang air kecil membatalkannya." },
+// Soal 26
+{ q:"Tayamum dilakukan dengan menggunakan ...", arab:"", opsi:["Air mutlak","Debu atau tanah yang suci","Air hujan","Pasir najis"], kunci:1, bahas:"Tayamum pengganti wudu bila tidak ada air atau tidak boleh terkena air, memakai debu atau tanah suci." },
+// Soal 27
+{ q:"Jumlah shalat fardu dalam sehari semalam adalah ...", arab:"", opsi:["3","4","5","6"], kunci:2, bahas:"Shalat fardu ada 5: Subuh, Zuhur, Asar, Magrib, Isya." },
+// Soal 28
+{ q:"Shalat fardu yang jumlah rakaatnya dua adalah ...", arab:"", opsi:["Subuh","Zuhur","Asar","Isya"], kunci:0, bahas:"Subuh 2 rakaat; Zuhur, Asar, dan Isya 4 rakaat; Magrib 3 rakaat." },
+// Soal 29
+{ q:"Shalat fardu yang jumlah rakaatnya tiga adalah ...", arab:"", opsi:["Subuh","Magrib","Zuhur","Isya"], kunci:1, bahas:"Shalat Magrib berjumlah 3 rakaat." },
+// Soal 30
+{ q:"Takbiratul ihram adalah ...", arab:"", opsi:["Salam penutup shalat","Membaca Al-Fatihah","Mengucapkan Allahu Akbar pada awal shalat","Duduk di antara dua sujud"], kunci:2, bahas:"Takbiratul ihram adalah ucapan Allahu Akbar pertama yang menandai dimulainya shalat." },
+// Soal 31
+{ q:"Azan dikumandangkan untuk ...", arab:"", opsi:["Memberitahukan masuknya waktu shalat fardu","Mengumumkan hari libur","Menandai selesainya shalat","Mengajak berdemonstrasi"], kunci:0, bahas:"Azan adalah pemberitahuan masuknya waktu shalat fardu." },
+// Soal 32
+{ q:"Waktu shalat Subuh berakhir ketika ...", arab:"", opsi:["Matahari tergelincir","Terbit matahari","Matahari terbenam","Hilang mega merah"], kunci:1, bahas:"Waktu Subuh dari terbit fajar sadik sampai terbit matahari." },
+// Soal 33
+{ q:"Menurut hadis, shalat berjamaah lebih utama daripada shalat sendirian sebanyak ... derajat.", arab:"", opsi:["7","17","27","37"], kunci:2, bahas:"Hadis riwayat Bukhari dan Muslim menyebut keutamaan 27 derajat." },
+// Soal 34
+{ q:"Sifat wajib rasul \"Shiddiq\" berarti ...", arab:"", opsi:["Menyampaikan wahyu","Cerdas","Dapat dipercaya","Jujur"], kunci:3, bahas:"Shiddiq berarti jujur." },
+// Soal 35
+{ q:"Sifat wajib rasul \"Amanah\" berarti ...", arab:"", opsi:["Jujur","Dapat dipercaya","Cerdas","Menyampaikan wahyu"], kunci:1, bahas:"Amanah berarti dapat dipercaya." },
+// Soal 36
+{ q:"Sifat wajib rasul \"Tabligh\" berarti ...", arab:"", opsi:["Cerdas","Jujur","Menyampaikan wahyu","Dapat dipercaya"], kunci:2, bahas:"Tabligh berarti menyampaikan wahyu dan ajaran Allah." },
+// Soal 37
+{ q:"Sifat wajib rasul \"Fathanah\" berarti ...", arab:"", opsi:["Cerdas","Jujur","Dapat dipercaya","Menyampaikan wahyu"], kunci:0, bahas:"Fathanah berarti cerdas." },
+// Soal 38
+{ q:"Hadis ini menunjukkan bahwa rasa malu berbuat dosa adalah ...", arab:"اَلْحَيَاءُ مِنَ الْإِيْمَانِ", opsi:["Tanda kelemahan","Sebagian dari iman","Sikap berlebihan","Tidak perlu dimiliki"], kunci:1, bahas:"Malu (berbuat buruk) adalah sebagian dari iman." },
+// Soal 39
+{ q:"Pesan utama hadis tersebut adalah ...", arab:"مَنْ كَانَ يُؤْمِنُ بِاللّٰهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ", opsi:["Berbicara bebas","Menyindir orang lain","Banyak bicara","Berkata baik atau diam"], kunci:3, bahas:"Orang beriman hendaknya berkata baik atau diam (HR Bukhari dan Muslim)." },
+// Soal 40
+{ q:"Potongan QS Al-Isra' ayat 23 ini memerintahkan kita untuk ...", arab:"وَبِالْوَالِدَيْنِ اِحْسَانًا", opsi:["Berbuat baik kepada kedua orang tua","Membantah orang tua","Mengabaikan orang tua","Menunda perintah orang tua"], kunci:0, bahas:"Artinya \"dan berbuat baiklah kepada kedua orang tua\"." },
+// Soal 41
+{ q:"Ayat ini mengajarkan sikap ...", arab:"اِنَّ مَعَ الْعُسْرِ يُسْرًا", opsi:["Putus asa","Mudah menyerah","Sabar dan optimis","Mengeluh"], kunci:2, bahas:"QS Al-Insyirah ayat 6: sesungguhnya bersama kesulitan ada kemudahan." },
+// Soal 42
+{ q:"Tawadu berarti ...", arab:"", opsi:["Sombong","Rendah hati","Pelit","Penakut"], kunci:1, bahas:"Tawadu adalah rendah hati dan tidak menyombongkan diri." },
+// Soal 43
+{ q:"Nabi pertama sekaligus manusia pertama adalah ...", arab:"", opsi:["Nabi Adam a.s.","Nabi Nuh a.s.","Nabi Idris a.s.","Nabi Ibrahim a.s."], kunci:0, bahas:"Nabi Adam a.s. adalah manusia pertama dan nabi pertama." },
+// Soal 44
+{ q:"Nabi Ibrahim a.s. mendapat gelar ...", arab:"", opsi:["Kalimullah","Rasulullah","Ruhullah","Khalilullah"], kunci:3, bahas:"Khalilullah berarti kekasih Allah. Kalimullah gelar Nabi Musa, Ruhullah gelar Nabi Isa." },
+// Soal 45
+{ q:"Nabi Muhammad saw. dilahirkan di kota ...", arab:"", opsi:["Madinah","Makkah","Thaif","Yaman"], kunci:1, bahas:"Nabi Muhammad saw. lahir di Makkah pada tahun Gajah." },
+// Soal 46
+{ q:"Peristiwa berpindahnya Nabi Muhammad saw. dari Makkah ke Madinah disebut ...", arab:"", opsi:["Isra","Mikraj","Hijrah","Fathu Makkah"], kunci:2, bahas:"Perpindahan dari Makkah ke Madinah disebut hijrah." },
+// Soal 47
+{ q:"Istri pertama Nabi Muhammad saw. adalah ...", arab:"", opsi:["Aisyah r.a.","Hafsah r.a.","Zainab r.a.","Khadijah r.a."], kunci:3, bahas:"Khadijah binti Khuwailid adalah istri pertama dan pendukung setia dakwah Nabi." },
+// Soal 48
+{ q:"Khalifah pertama setelah wafatnya Rasulullah saw. adalah ...", arab:"", opsi:["Abu Bakar ash-Shiddiq","Umar bin Khattab","Utsman bin Affan","Ali bin Abi Thalib"], kunci:0, bahas:"Khulafaur Rasyidin berurutan: Abu Bakar, Umar, Utsman, Ali." },
+// Soal 49
+{ q:"Hukum menjawab salam adalah ...", arab:"", opsi:["Sunah","Wajib","Mubah","Makruh"], kunci:1, bahas:"Menjawab salam hukumnya wajib." },
+// Soal 50
+{ q:"Ucapan yang dianjurkan ketika bersin adalah ...", arab:"", opsi:["Alhamdulillah","Astaghfirullah","Subhanallah","Allahu Akbar"], kunci:0, bahas:"Ketika bersin dianjurkan mengucap Alhamdulillah." },
+
+];
+
+const soalKelas8 = [
+  { q:"Menurut QS. Al-Hujurat ayat 13, orang yang paling mulia di sisi Allah adalah ...", arab:"إِنَّ أَكْرَمَكُمْ عِنْدَ اللّٰهِ أَتْقَاكُمْ",
+    opsi:["Yang paling kaya","Yang paling bertakwa","Yang paling tinggi jabatannya","Yang paling banyak keturunannya"], kunci:1,
+    bahas:"Ayat tersebut menegaskan kemuliaan diukur dari ketakwaan, bukan harta, jabatan, atau keturunan." },
+  { q:"Malaikat yang bertugas menyampaikan wahyu kepada para nabi adalah ...", arab:"",
+    opsi:["Mikail","Israfil","Jibril","Izrail"], kunci:2,
+    bahas:"Jibril bertugas menyampaikan wahyu. Mikail membagi rezeki, Israfil meniup sangkakala, Izrail mencabut nyawa." },
+  { q:"Shalat jamak taqdim adalah menggabungkan dua shalat yang dilaksanakan pada waktu ...", arab:"",
+    opsi:["Shalat yang kedua","Shalat yang pertama","Sembarang waktu","Waktu Isya saja"], kunci:1,
+    bahas:"Jamak taqdim dikerjakan pada waktu shalat yang pertama, misalnya Zuhur dan Asar pada waktu Zuhur." },
+
+  // >>> TEMPEL SOAL KELAS 8 NOMOR 4 - 50 DI BAWAH INI <<<
+  // ===== SOAL KELAS 8 : NOMOR 4 - 50 (47 soal) =====
+// Tempel SEMUA isi file ini tepat di bawah komentar ">>> TEMPEL SOAL KELAS 8 ..." di dalam const soalKelas8 = [ ... ]
+// kunci: 0=A, 1=B, 2=C, 3=D
+
+// Soal 4
+{ q:"Jumlah malaikat yang wajib diketahui nama dan tugasnya adalah ...", arab:"", opsi:["8","9","10","12"], kunci:2, bahas:"Malaikat yang wajib diketahui ada 10: Jibril, Mikail, Israfil, Izrail, Munkar, Nakir, Raqib, Atid, Malik, dan Ridwan." },
+// Soal 5
+{ q:"Malaikat Mikail bertugas ...", arab:"", opsi:["Meniup sangkakala","Membagi rezeki dan menurunkan hujan","Mencabut nyawa","Mencatat amal manusia"], kunci:1, bahas:"Mikail bertugas membagi rezeki dan menurunkan hujan." },
+// Soal 6
+{ q:"Malaikat Israfil bertugas ...", arab:"", opsi:["Mencatat amal baik","Menyampaikan wahyu","Menjaga surga","Meniup sangkakala pada hari kiamat"], kunci:3, bahas:"Israfil bertugas meniup sangkakala pada hari kiamat." },
+// Soal 7
+{ q:"Malaikat Izrail bertugas ...", arab:"", opsi:["Mencabut nyawa","Membagi rezeki","Menjaga neraka","Bertanya di alam kubur"], kunci:0, bahas:"Izrail (Malakul Maut) bertugas mencabut nyawa." },
+// Soal 8
+{ q:"Malaikat Munkar dan Nakir bertugas ...", arab:"", opsi:["Mencatat amal","Meniup sangkakala","Bertanya kepada manusia di alam kubur","Menjaga pintu surga"], kunci:2, bahas:"Munkar dan Nakir menanyai manusia di alam kubur." },
+// Soal 9
+{ q:"Malaikat Raqib dan Atid bertugas ...", arab:"", opsi:["Menjaga neraka","Mencatat amal baik dan buruk manusia","Menyampaikan wahyu","Membagi rezeki"], kunci:1, bahas:"Raqib mencatat amal baik dan Atid mencatat amal buruk." },
+// Soal 10
+{ q:"Malaikat penjaga pintu neraka adalah ...", arab:"", opsi:["Ridwan","Malik","Jibril","Mikail"], kunci:1, bahas:"Malik adalah penjaga neraka." },
+// Soal 11
+{ q:"Malaikat penjaga pintu surga adalah ...", arab:"", opsi:["Ridwan","Malik","Atid","Nakir"], kunci:0, bahas:"Ridwan adalah penjaga surga." },
+// Soal 12
+{ q:"Malaikat diciptakan Allah dari ...", arab:"", opsi:["Tanah","Api","Cahaya (nur)","Air"], kunci:2, bahas:"Malaikat diciptakan dari cahaya, jin dari api, dan manusia dari tanah." },
+// Soal 13
+{ q:"Berikut ini yang termasuk sifat malaikat adalah ...", arab:"", opsi:["Makan dan minum","Tidak pernah durhaka kepada Allah","Memiliki keturunan","Berjenis kelamin laki-laki"], kunci:1, bahas:"Malaikat selalu taat dan tidak pernah durhaka kepada Allah." },
+// Soal 14
+{ q:"Kitab Taurat diturunkan kepada ...", arab:"", opsi:["Nabi Musa a.s.","Nabi Daud a.s.","Nabi Isa a.s.","Nabi Muhammad saw."], kunci:0, bahas:"Taurat diturunkan kepada Nabi Musa a.s." },
+// Soal 15
+{ q:"Kitab Zabur diturunkan kepada ...", arab:"", opsi:["Nabi Musa a.s.","Nabi Isa a.s.","Nabi Sulaiman a.s.","Nabi Daud a.s."], kunci:3, bahas:"Zabur diturunkan kepada Nabi Daud a.s." },
+// Soal 16
+{ q:"Kitab Injil diturunkan kepada ...", arab:"", opsi:["Nabi Daud a.s.","Nabi Musa a.s.","Nabi Isa a.s.","Nabi Yahya a.s."], kunci:2, bahas:"Injil diturunkan kepada Nabi Isa a.s." },
+// Soal 17
+{ q:"Ayat ini menegaskan bahwa Al-Qur'an ...", arab:"اِنَّا نَحْنُ نَزَّلْنَا الذِّكْرَ وَاِنَّا لَهٗ لَحٰفِظُوْنَ", opsi:["Dijaga keasliannya oleh Allah","Boleh diubah","Hanya untuk orang Arab","Tidak perlu dipelajari"], kunci:0, bahas:"QS Al-Hijr ayat 9: Allah menjamin keaslian Al-Qur'an." },
+// Soal 18
+{ q:"Berikut ini yang bukan termasuk Rasul Ulul Azmi adalah ...", arab:"", opsi:["Nabi Nuh a.s.","Nabi Musa a.s.","Nabi Isa a.s.","Nabi Yusuf a.s."], kunci:3, bahas:"Ulul Azmi: Nuh, Ibrahim, Musa, Isa, dan Muhammad saw." },
+// Soal 19
+{ q:"Jumlah rasul yang wajib diketahui namanya adalah ...", arab:"", opsi:["15","20","25","30"], kunci:2, bahas:"Rasul yang wajib diketahui namanya ada 25." },
+// Soal 20
+{ q:"Mukjizat Nabi Ibrahim a.s. ketika dibakar Raja Namrud adalah ...", arab:"", opsi:["Api menjadi dingin dan tidak membakarnya","Laut terbelah","Dapat menghidupkan orang mati","Dapat berbicara dengan hewan"], kunci:0, bahas:"Atas izin Allah, api menjadi dingin dan menyelamatkan Nabi Ibrahim a.s." },
+// Soal 21
+{ q:"Mukjizat terbesar Nabi Muhammad saw. yang kekal hingga kini adalah ...", arab:"", opsi:["Tongkat","Al-Qur'an","Terbelahnya laut","Menghidupkan orang mati"], kunci:1, bahas:"Al-Qur'an adalah mukjizat abadi Nabi Muhammad saw." },
+// Soal 22
+{ q:"Sikap Nabi Yusuf a.s. terhadap saudara-saudaranya yang pernah mencelakainya adalah ...", arab:"", opsi:["Membalas dendam","Menjauhi mereka","Memaafkan mereka","Mengusir mereka"], kunci:2, bahas:"Nabi Yusuf a.s. memaafkan saudara-saudaranya, teladan sifat pemaaf." },
+// Soal 23
+{ q:"Peristiwa hijrah Nabi Muhammad saw. dijadikan awal penanggalan ...", arab:"", opsi:["Masehi","Hijriah","Saka","Jawa"], kunci:1, bahas:"Kalender Hijriah dimulai dari peristiwa hijrah Nabi ke Madinah." },
+// Soal 24
+{ q:"Penduduk Madinah yang menolong kaum Muhajirin disebut ...", arab:"", opsi:["Quraisy","Muhajirin","Anshar","Tsaqif"], kunci:2, bahas:"Anshar adalah penolong, yaitu penduduk Madinah yang menyambut kaum Muhajirin." },
+// Soal 25
+{ q:"Peristiwa Fathu Makkah (pembebasan kota Makkah) terjadi pada tahun ...", arab:"", opsi:["6 H","7 H","9 H","8 H"], kunci:3, bahas:"Fathu Makkah terjadi pada tahun 8 Hijriah, nyaris tanpa pertumpahan darah." },
+// Soal 26
+{ q:"Khalifah kedua dalam Khulafaur Rasyidin adalah ...", arab:"", opsi:["Abu Bakar ash-Shiddiq","Umar bin Khattab","Utsman bin Affan","Ali bin Abi Thalib"], kunci:1, bahas:"Urutan: Abu Bakar, Umar bin Khattab, Utsman bin Affan, Ali bin Abi Thalib." },
+// Soal 27
+{ q:"Khalifah yang menyeragamkan penulisan mushaf Al-Qur'an (Mushaf Utsmani) adalah ...", arab:"", opsi:["Abu Bakar","Umar bin Khattab","Utsman bin Affan","Ali bin Abi Thalib"], kunci:2, bahas:"Pada masa Utsman bin Affan, mushaf disalin dan distandarkan menjadi Mushaf Utsmani." },
+// Soal 28
+{ q:"Khalifah keempat Khulafaur Rasyidin adalah ...", arab:"", opsi:["Ali bin Abi Thalib","Utsman bin Affan","Umar bin Khattab","Abu Bakar ash-Shiddiq"], kunci:0, bahas:"Ali bin Abi Thalib adalah khalifah keempat." },
+// Soal 29
+{ q:"Shalat qasar adalah ...", arab:"", opsi:["Menggabungkan dua shalat","Meringkas shalat yang 4 rakaat menjadi 2 rakaat","Shalat sambil duduk","Shalat sunah sebelum fajar"], kunci:1, bahas:"Qasar adalah meringkas shalat 4 rakaat menjadi 2 rakaat bagi musafir." },
+// Soal 30
+{ q:"Shalat fardu yang tidak boleh diqasar adalah ...", arab:"", opsi:["Zuhur","Asar","Isya","Magrib"], kunci:3, bahas:"Hanya shalat 4 rakaat (Zuhur, Asar, Isya) yang boleh diqasar. Magrib dan Subuh tidak." },
+// Soal 31
+{ q:"Jamak takhir adalah menggabungkan dua shalat yang dilaksanakan pada waktu ...", arab:"", opsi:["Shalat yang pertama","Shalat yang kedua","Subuh","Tengah malam"], kunci:1, bahas:"Jamak takhir dilakukan pada waktu shalat yang kedua." },
+// Soal 32
+{ q:"Sujud sahwi dilakukan ketika ...", arab:"", opsi:["Mendapat nikmat","Membaca ayat sajdah","Lupa kurang rakaat atau meninggalkan tasyahud awal","Selesai shalat sunah"], kunci:2, bahas:"Sujud sahwi dilakukan untuk menutupi kekeliruan karena lupa dalam shalat." },
+// Soal 33
+{ q:"Sujud syukur dilakukan ketika ...", arab:"", opsi:["Lupa dalam shalat","Mendapat nikmat atau terhindar dari bahaya","Sebelum tidur","Hendak makan"], kunci:1, bahas:"Sujud syukur dilakukan sebagai ungkapan terima kasih atas nikmat atau terhindar dari bahaya." },
+// Soal 34
+{ q:"Shalat Jumat wajib dikerjakan oleh ...", arab:"", opsi:["Perempuan saja","Anak kecil","Laki-laki muslim, baligh, dan mukim","Orang yang sedang bepergian"], kunci:2, bahas:"Shalat Jumat wajib bagi laki-laki muslim yang baligh, berakal, dan mukim." },
+// Soal 35
+{ q:"Khutbah Jumat dilaksanakan ...", arab:"", opsi:["Setelah shalat","Saat rukuk","Tidak ada khutbah","Sebelum shalat Jumat"], kunci:3, bahas:"Khutbah dilaksanakan dua kali sebelum shalat Jumat." },
+// Soal 36
+{ q:"Jumlah takbir dalam shalat jenazah adalah ...", arab:"", opsi:["3","4","5","6"], kunci:1, bahas:"Shalat jenazah dilakukan dengan 4 kali takbir, tanpa rukuk dan sujud." },
+// Soal 37
+{ q:"Hukum shalat jenazah bagi umat Islam adalah ...", arab:"", opsi:["Fardu ain","Sunah muakadah","Fardu kifayah","Mubah"], kunci:2, bahas:"Fardu kifayah: jika sebagian sudah melaksanakan, gugurlah kewajiban yang lain." },
+// Soal 38
+{ q:"Hukum puasa Ramadan bagi muslim yang baligh dan mampu adalah ...", arab:"يٰٓاَيُّهَا الَّذِيْنَ اٰمَنُوْا كُتِبَ عَلَيْكُمُ الصِّيَامُ", opsi:["Wajib","Sunah","Mubah","Makruh"], kunci:0, bahas:"QS Al-Baqarah ayat 183 mewajibkan puasa bagi orang beriman." },
+// Soal 39
+{ q:"Niat puasa Ramadan dilakukan pada ...", arab:"", opsi:["Siang hari saja","Sesudah berbuka","Setelah Isya saja","Malam hari sebelum terbit fajar"], kunci:3, bahas:"Niat puasa wajib dilakukan pada malam hari sebelum terbit fajar." },
+// Soal 40
+{ q:"Hal yang membatalkan puasa adalah ...", arab:"", opsi:["Mandi","Berkumur","Makan dan minum dengan sengaja","Menyikat gigi"], kunci:2, bahas:"Makan dan minum dengan sengaja membatalkan puasa." },
+// Soal 41
+{ q:"Puasa sunah mingguan yang dianjurkan Nabi saw. adalah puasa hari ...", arab:"", opsi:["Sabtu dan Ahad","Selasa dan Rabu","Jumat saja","Senin dan Kamis"], kunci:3, bahas:"Nabi saw. dianjurkan berpuasa pada hari Senin dan Kamis." },
+// Soal 42
+{ q:"Hari yang diharamkan untuk berpuasa adalah ...", arab:"", opsi:["Senin","Hari Raya Idul Fitri","Kamis","Hari Asyura"], kunci:1, bahas:"Berpuasa pada hari raya Idul Fitri dan Idul Adha diharamkan." },
+// Soal 43
+{ q:"Menurut ayat tersebut, malam Lailatul Qadar lebih baik daripada ... bulan.", arab:"لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ اَلْفِ شَهْرٍ", opsi:["100","500","1000","10.000"], kunci:2, bahas:"QS Al-Qadr ayat 3: Lailatul Qadar lebih baik daripada seribu bulan." },
+// Soal 44
+{ q:"Ayat ini mengajarkan ...", arab:"اِنَّمَا الْمُؤْمِنُوْنَ اِخْوَةٌ", opsi:["Persaudaraan sesama mukmin","Permusuhan antarsesama","Perbedaan derajat harta","Persaingan tidak sehat"], kunci:0, bahas:"QS Al-Hujurat ayat 10: orang-orang mukmin itu bersaudara." },
+// Soal 45
+{ q:"Menurut hadis, muslim sejati adalah orang yang ...", arab:"اَلْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُوْنَ مِنْ لِسَانِهِ وَيَدِهِ", opsi:["Banyak harta","Orang lain selamat dari gangguan lisan dan tangannya","Pandai berpidato","Banyak teman"], kunci:1, bahas:"Muslim sejati menjaga lisan dan tangannya agar tidak menyakiti orang lain (HR Bukhari dan Muslim)." },
+// Soal 46
+{ q:"Silaturahmi artinya ...", arab:"", opsi:["Memutus hubungan","Berdebat","Berpisah","Menyambung tali persaudaraan"], kunci:3, bahas:"Silaturahmi berarti menyambung hubungan kasih sayang dan persaudaraan." },
+// Soal 47
+{ q:"Ghibah adalah ...", arab:"", opsi:["Mendoakan teman","Menasihati teman","Membicarakan keburukan orang lain di belakangnya","Menolong teman"], kunci:2, bahas:"Ghibah adalah membicarakan keburukan orang lain yang tidak hadir. Perbuatan ini dilarang." },
+// Soal 48
+{ q:"Hasad adalah ...", arab:"", opsi:["Iri dan dengki terhadap nikmat orang lain","Rasa syukur","Murah hati","Rendah hati"], kunci:0, bahas:"Hasad adalah iri dan dengki, termasuk sifat tercela." },
+// Soal 49
+{ q:"Riya adalah ...", arab:"", opsi:["Beramal dengan ikhlas","Beramal agar dipuji orang lain","Bersabar saat musibah","Berserah diri kepada Allah"], kunci:1, bahas:"Riya adalah beramal untuk dipuji manusia, bukan karena Allah." },
+// Soal 50
+{ q:"Kita diperintahkan tolong-menolong dalam hal ...", arab:"وَتَعَاوَنُوْا عَلَى الْبِرِّ وَالتَّقْوٰى", opsi:["Dosa dan permusuhan","Keburukan","Kebaikan dan takwa","Kecurangan"], kunci:2, bahas:"QS Al-Ma'idah ayat 2: tolong-menolonglah dalam kebajikan dan takwa." },
+
+];
+
+const soalKelas9 = [
+  { q:"Pesan QS. Az-Zalzalah ayat 7 adalah ...", arab:"فَمَنْ يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهٗ",
+    opsi:["Kebaikan sekecil apa pun akan dilihat balasannya","Hanya amal besar yang dihitung","Amal tidak dicatat","Balasan hanya di dunia"], kunci:0,
+    bahas:"Artinya \"Barang siapa mengerjakan kebaikan seberat zarah, dia akan melihat (balasan)nya\". Ini terkait iman kepada hari akhir." },
+  { q:"Ayat berikut menjadi dalil bahwa nasib seseorang dipengaruhi oleh ...", arab:"إِنَّ اللّٰهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتّٰى يُغَيِّرُوْا مَا بِأَنْفُسِهِمْ",
+    opsi:["Keberuntungan semata","Usaha manusia itu sendiri","Bintang dan zodiak","Warisan keluarga"], kunci:1,
+    bahas:"QS. Ar-Ra'd ayat 11 menegaskan perubahan keadaan bergantung pada ikhtiar manusia, sesuai konsep takdir muallaq." },
+  { q:"Zakat fitrah wajib ditunaikan paling lambat ...", arab:"",
+    opsi:["Setelah shalat Idul Fitri","Sebelum shalat Idul Fitri","Awal Syawal pekan kedua","Akhir Dzulhijjah"], kunci:1,
+    bahas:"Zakat fitrah ditunaikan sebelum shalat Idul Fitri. Jika sesudahnya, nilainya hanya menjadi sedekah biasa." },
+
+  // >>> TEMPEL SOAL KELAS 9 NOMOR 4 - 50 DI BAWAH INI <<<
+// ===== SOAL KELAS 9 : NOMOR 4 - 50 (47 soal) =====
+// Tempel SEMUA isi file ini tepat di bawah komentar ">>> TEMPEL SOAL KELAS 9 ..." di dalam const soalKelas9 = [ ... ]
+// kunci: 0=A, 1=B, 2=C, 3=D
+
+// Soal 4
+{ q:"Yaumul hisab artinya hari ...", arab:"", opsi:["Kebangkitan","Perhitungan amal","Berkumpul","Penimbangan"], kunci:1, bahas:"Yaumul hisab adalah hari perhitungan amal manusia." },
+// Soal 5
+{ q:"Alam barzakh adalah alam ...", arab:"", opsi:["Setelah hari kiamat","Sebelum kelahiran","Di dalam surga","Antara kematian hingga hari kebangkitan"], kunci:3, bahas:"Barzakh adalah alam kubur, antara kematian dan hari kebangkitan." },
+// Soal 6
+{ q:"Yaumul ba'ats artinya hari ...", arab:"", opsi:["Berkumpul di padang mahsyar","Penimbangan amal","Kebangkitan manusia dari kubur","Perhitungan amal"], kunci:2, bahas:"Ba'ats berarti kebangkitan seluruh manusia dari kubur." },
+// Soal 7
+{ q:"Penimbangan amal baik dan buruk manusia pada hari akhir disebut ...", arab:"", opsi:["Mizan","Shirath","Hisab","Mahsyar"], kunci:0, bahas:"Mizan adalah timbangan amal pada hari kiamat." },
+// Soal 8
+{ q:"Jembatan yang terbentang di atas neraka menuju surga disebut ...", arab:"", opsi:["Mizan","Mahsyar","Shirath","Barzakh"], kunci:2, bahas:"Shirath adalah jembatan yang harus dilalui manusia pada hari akhir." },
+// Soal 9
+{ q:"Berikut ini yang termasuk tanda kiamat besar adalah ...", arab:"", opsi:["Banyaknya ilmu pengetahuan","Terbitnya matahari dari barat","Banyaknya orang berhaji","Kemajuan teknologi"], kunci:1, bahas:"Terbitnya matahari dari barat termasuk tanda kiamat besar, bersama keluarnya Dajjal dan Ya'juj-Ma'juj." },
+// Soal 10
+{ q:"Hikmah beriman kepada hari akhir adalah ...", arab:"", opsi:["Menjadi lalai","Mendorong berhati-hati dan giat berbuat baik","Takut berlebihan sampai tidak beraktivitas","Tidak peduli urusan dunia"], kunci:1, bahas:"Iman kepada hari akhir menumbuhkan kesadaran bahwa semua amal akan dipertanggungjawabkan." },
+// Soal 11
+{ q:"Ayat ini menjelaskan bahwa ...", arab:"كُلُّ نَفْسٍ ذَآئِقَةُ الْمَوْتِ", opsi:["Orang baik tidak akan mati","Kematian bisa dihindari","Setiap yang bernyawa pasti merasakan mati","Hanya orang sakit yang mati"], kunci:2, bahas:"QS Ali 'Imran ayat 185: setiap yang bernyawa pasti akan merasakan kematian." },
+// Soal 12
+{ q:"Qada adalah ...", arab:"", opsi:["Ketetapan Allah sejak zaman azali","Pelaksanaan takdir yang telah terjadi","Usaha manusia","Doa seorang hamba"], kunci:0, bahas:"Qada adalah ketetapan Allah sejak zaman azali, sedangkan qadar adalah perwujudannya." },
+// Soal 13
+{ q:"Takdir mubram adalah takdir yang ...", arab:"", opsi:["Dapat berubah dengan usaha","Tidak dapat diubah, misalnya waktu kematian","Ditentukan oleh manusia","Berubah hanya dengan doa"], kunci:1, bahas:"Takdir mubram bersifat pasti dan tidak dapat diubah manusia." },
+// Soal 14
+{ q:"Contoh takdir muallaq adalah ...", arab:"", opsi:["Waktu kematian","Jenis kelamin","Prestasi belajar yang dipengaruhi usaha","Tanggal lahir"], kunci:2, bahas:"Takdir muallaq bergantung pada ikhtiar manusia, misalnya prestasi karena rajin belajar." },
+// Soal 15
+{ q:"Tawakal berarti ...", arab:"", opsi:["Pasrah tanpa usaha","Menyerah","Mengeluh","Berserah diri kepada Allah setelah berusaha"], kunci:3, bahas:"Tawakal dilakukan setelah ikhtiar maksimal." },
+// Soal 16
+{ q:"Kalimat tersebut dianjurkan diucapkan ketika ...", arab:"إِنَّا لِلّٰهِ وَإِنَّا إِلَيْهِ رَاجِعُوْنَ", opsi:["Mendapat hadiah","Tertimpa musibah","Bersin","Marah"], kunci:1, bahas:"Kalimat istirja' diucapkan ketika tertimpa musibah (QS Al-Baqarah ayat 156)." },
+// Soal 17
+{ q:"Zakat adalah rukun Islam yang ke ...", arab:"وَاٰتُوا الزَّكٰوةَ", opsi:["1","2","3","4"], kunci:2, bahas:"Zakat adalah rukun Islam ketiga. Perintahnya disebutkan antara lain dalam QS Al-Baqarah ayat 43." },
+// Soal 18
+{ q:"Zakat fitrah dibayarkan dengan makanan pokok sebanyak kurang lebih ...", arab:"", opsi:["1 kg","2,5 kg atau 3,5 liter","5 kg","10 kg"], kunci:1, bahas:"Zakat fitrah sebesar satu sha', kurang lebih 2,5 kg atau 3,5 liter beras. Ikuti ketetapan lembaga zakat setempat." },
+// Soal 19
+{ q:"Zakat mal wajib dikeluarkan jika harta telah mencapai ...", arab:"", opsi:["Nisab dan haul","Sepuluh juta rupiah","Dua kali lipat","Jumlah ganjil"], kunci:0, bahas:"Syarat zakat mal: mencapai nisab (batas minimal) dan haul (dimiliki satu tahun)." },
+// Soal 20
+{ q:"Nisab zakat emas adalah ... gram.", arab:"", opsi:["20","50","85","100"], kunci:2, bahas:"Nisab emas adalah 85 gram." },
+// Soal 21
+{ q:"Kadar zakat emas, perak, dan perdagangan adalah ...", arab:"", opsi:["2,5%","5%","10%","20%"], kunci:0, bahas:"Kadarnya 2,5% dari harta yang telah mencapai nisab dan haul." },
+// Soal 22
+{ q:"Jumlah golongan penerima zakat (asnaf) adalah ...", arab:"", opsi:["5","6","7","8"], kunci:3, bahas:"Ada 8 asnaf: fakir, miskin, amil, muallaf, riqab, gharim, fisabilillah, dan ibnu sabil (QS At-Taubah ayat 60)." },
+// Soal 23
+{ q:"Orang yang hampir tidak memiliki harta dan penghasilan untuk memenuhi kebutuhan pokoknya disebut ...", arab:"", opsi:["Fakir","Gharim","Riqab","Ibnu sabil"], kunci:0, bahas:"Fakir adalah orang yang hampir tidak memiliki harta dan penghasilan." },
+// Soal 24
+{ q:"Berikut ini yang tidak berhak menerima zakat adalah ...", arab:"", opsi:["Fakir","Miskin","Orang kaya yang mampu","Gharim (orang yang berutang)"], kunci:2, bahas:"Orang kaya yang mampu bukan termasuk penerima zakat." },
+// Soal 25
+{ q:"Pemberian harta secara sukarela tanpa batas nisab dan waktu tertentu disebut ...", arab:"", opsi:["Zakat","Sedekah atau infak","Kurban","Fidyah"], kunci:1, bahas:"Sedekah atau infak bersifat sukarela dan boleh dilakukan kapan saja." },
+// Soal 26
+{ q:"Tujuan utama zakat antara lain ...", arab:"", opsi:["Menumpuk harta","Mencari pujian","Menghindari pajak","Membersihkan harta dan jiwa serta menolong yang membutuhkan"], kunci:3, bahas:"Zakat membersihkan harta dan jiwa, serta menumbuhkan kepedulian sosial." },
+// Soal 27
+{ q:"Haji adalah rukun Islam yang ke ...", arab:"", opsi:["3","4","5","2"], kunci:2, bahas:"Haji adalah rukun Islam kelima, wajib bagi yang mampu." },
+// Soal 28
+{ q:"Rukun haji yang paling utama adalah ...", arab:"", opsi:["Wukuf di Arafah","Melempar jumrah","Bermalam di Mina","Tahalul"], kunci:0, bahas:"Nabi saw. bersabda bahwa haji itu Arafah, yaitu wukuf di Arafah." },
+// Soal 29
+{ q:"Tempat dan waktu yang ditetapkan untuk memulai ihram disebut ...", arab:"", opsi:["Tawaf","Sa'i","Miqat","Tahalul"], kunci:2, bahas:"Miqat adalah batas tempat (miqat makani) dan waktu (miqat zamani) memulai ihram." },
+// Soal 30
+{ q:"Pakaian ihram bagi laki-laki berupa ...", arab:"", opsi:["Pakaian biasa berjahit","Dua helai kain putih tanpa jahitan","Jas","Seragam"], kunci:1, bahas:"Pakaian ihram laki-laki adalah dua helai kain putih tanpa jahitan." },
+// Soal 31
+{ q:"Kalimat tersebut disebut ...", arab:"لَبَّيْكَ اللّٰهُمَّ لَبَّيْكَ", opsi:["Takbir","Tahmid","Talbiyah","Tasbih"], kunci:2, bahas:"Talbiyah dibaca oleh orang yang berihram untuk haji atau umrah." },
+// Soal 32
+{ q:"Tawaf adalah ...", arab:"", opsi:["Berlari antara Shafa dan Marwah","Mengelilingi Ka'bah tujuh kali","Berdiam di Arafah","Melempar jumrah"], kunci:1, bahas:"Tawaf adalah mengelilingi Ka'bah sebanyak tujuh putaran." },
+// Soal 33
+{ q:"Sa'i dilakukan di antara bukit ...", arab:"", opsi:["Shafa dan Marwah","Uhud dan Hira","Tsur dan Arafah","Mina dan Muzdalifah"], kunci:0, bahas:"Sa'i adalah berjalan atau berlari kecil antara Shafa dan Marwah sebanyak tujuh kali." },
+// Soal 34
+{ q:"Ibadah kurban pada Idul Adha mengenang keteladanan Nabi ...", arab:"", opsi:["Musa a.s. dan Harun a.s.","Nuh a.s. dan putranya","Yusuf a.s. dan Yakub a.s.","Ibrahim a.s. dan Ismail a.s."], kunci:3, bahas:"Kurban mengenang ketaatan Nabi Ibrahim a.s. dan Nabi Ismail a.s." },
+// Soal 35
+{ q:"Hewan yang sah untuk kurban adalah ...", arab:"", opsi:["Ayam","Ikan","Kambing, sapi, atau unta yang sehat dan cukup umur","Kelinci"], kunci:2, bahas:"Hewan kurban berasal dari golongan ternak (unta, sapi, kambing/domba) yang sehat dan cukup umur." },
+// Soal 36
+{ q:"Penyembelihan hewan sebagai tanda syukur atas kelahiran anak disebut ...", arab:"", opsi:["Kurban","Aqiqah","Fidyah","Dam"], kunci:1, bahas:"Aqiqah adalah penyembelihan hewan atas kelahiran anak." },
+// Soal 37
+{ q:"Berikut ini yang termasuk rukun jual beli adalah ...", arab:"", opsi:["Ada penjual, pembeli, barang, dan ijab kabul","Hanya penjual","Harus ada tawar-menawar panjang","Harus tertulis di atas kertas bermaterai"], kunci:0, bahas:"Rukun jual beli: penjual, pembeli, barang yang diperjualbelikan, dan ijab kabul." },
+// Soal 38
+{ q:"Ayat ini menjelaskan bahwa ...", arab:"وَاَحَلَّ اللّٰهُ الْبَيْعَ وَحَرَّمَ الرِّبٰوا", opsi:["Riba itu halal","Jual beli itu haram","Jual beli dan riba sama saja","Jual beli halal dan riba haram"], kunci:3, bahas:"QS Al-Baqarah ayat 275: Allah menghalalkan jual beli dan mengharamkan riba." },
+// Soal 39
+{ q:"Hadis ini berarti ...", arab:"مَطْلُ الْغَنِيِّ ظُلْمٌ", opsi:["Menunda pembayaran utang oleh orang mampu adalah kezaliman","Utang tidak perlu dibayar","Orang kaya boleh menunda utang","Utang boleh dibayar kapan saja"], kunci:0, bahas:"Orang yang mampu membayar utang tetapi menundanya telah berbuat zalim (HR Bukhari dan Muslim)." },
+// Soal 40
+{ q:"Perintah dalam ayat tersebut adalah ...", arab:"وَشَاوِرْهُمْ فِى الْاَمْرِ", opsi:["Memutuskan sendiri","Bermusyawarah","Menunda keputusan","Memaksakan kehendak"], kunci:1, bahas:"QS Ali 'Imran ayat 159 memerintahkan bermusyawarah dalam urusan bersama." },
+// Soal 41
+{ q:"Ayat ini mengajarkan sikap ...", arab:"لَكُمْ دِيْنُكُمْ وَلِيَ دِيْنِ", opsi:["Memaksakan keyakinan","Mencampur ibadah agama","Toleransi dalam beragama","Memusuhi non-muslim"], kunci:2, bahas:"QS Al-Kafirun ayat 6 menegaskan toleransi: bagimu agamamu, bagiku agamaku." },
+// Soal 42
+{ q:"Ayat ini berarti ...", arab:"لَآ اِكْرَاهَ فِى الدِّيْنِ", opsi:["Tidak ada paksaan dalam agama","Wajib memaksa orang masuk Islam","Agama boleh dipaksakan","Tidak perlu beragama"], kunci:0, bahas:"QS Al-Baqarah ayat 256: tidak ada paksaan dalam (memasuki) agama." },
+// Soal 43
+{ q:"Pesan ayat ini adalah ...", arab:"وَاعْتَصِمُوْا بِحَبْلِ اللّٰهِ جَمِيْعًا وَّلَا تَفَرَّقُوْا", opsi:["Boleh berpecah belah","Bersatu berpegang teguh pada tali Allah","Mementingkan golongan sendiri","Menyendiri dari masyarakat"], kunci:1, bahas:"QS Ali 'Imran ayat 103 memerintahkan persatuan dan melarang perpecahan." },
+// Soal 44
+{ q:"Ayat ini mengajarkan berdakwah dengan ...", arab:"اُدْعُ اِلٰى سَبِيْلِ رَبِّكَ بِالْحِكْمَةِ وَالْمَوْعِظَةِ الْحَسَنَةِ", opsi:["Kekerasan","Paksaan","Hikmah dan nasihat yang baik","Ancaman"], kunci:2, bahas:"QS An-Nahl ayat 125: berdakwah dengan hikmah dan pelajaran yang baik." },
+// Soal 45
+{ q:"Sunan Kalijaga berdakwah dengan memanfaatkan ...", arab:"", opsi:["Perang","Pajak","Larangan terhadap budaya","Seni dan budaya seperti wayang"], kunci:3, bahas:"Walisongo menyebarkan Islam secara damai, antara lain melalui seni dan budaya lokal." },
+// Soal 46
+{ q:"Islam masuk ke Nusantara terutama melalui jalur ...", arab:"", opsi:["Perdagangan","Peperangan","Penjajahan","Pemaksaan"], kunci:0, bahas:"Islam menyebar di Nusantara terutama melalui pedagang muslim secara damai." },
+// Soal 47
+{ q:"Kerajaan Islam pertama di Nusantara adalah ...", arab:"", opsi:["Demak","Samudera Pasai","Mataram Islam","Banten"], kunci:1, bahas:"Samudera Pasai di Aceh dikenal sebagai kerajaan Islam pertama di Nusantara." },
+// Soal 48
+{ q:"Masa keemasan Islam dengan pusat ilmu Baitul Hikmah di Baghdad terjadi pada masa Dinasti ...", arab:"", opsi:["Umayyah","Fatimiyah","Abbasiyah","Utsmaniyah"], kunci:2, bahas:"Baitul Hikmah di Baghdad berkembang pada masa Dinasti Abbasiyah." },
+// Soal 49
+{ q:"Ilmuwan muslim yang dikenal sebagai bapak aljabar adalah ...", arab:"", opsi:["Ibnu Sina","Al-Biruni","Ibnu Rusyd","Al-Khawarizmi"], kunci:3, bahas:"Al-Khawarizmi dikenal sebagai bapak aljabar. Ibnu Sina terkenal di bidang kedokteran." },
+// Soal 50
+{ q:"Ummatan wasatha berarti umat yang ...", arab:"وَكَذٰلِكَ جَعَلْنٰكُمْ اُمَّةً وَّسَطًا", opsi:["Pertengahan, adil, dan seimbang","Ekstrem","Terpecah belah","Tertutup"], kunci:0, bahas:"QS Al-Baqarah ayat 143 menjadi dasar moderasi beragama: umat pertengahan yang adil dan seimbang." },
+];
+
+// Pemetaan pilihan dropdown -> bank soal (jangan diubah)
+const BANK = { "7": soalKelas7, "8": soalKelas8, "9": soalKelas9 };
+const LABEL_KELAS = { "7":"Kelas 7 (Kelas 1)", "8":"Kelas 8 (Kelas 2)", "9":"Kelas 9 (Kelas 3)" };
+</script>
+
+<!-- ============================================================
+  3. TAMPILAN
+============================================================ -->
+<main class="max-w-3xl mx-auto p-4 pb-16">
+
+  <!-- Halaman awal -->
+  <section id="s-awal" class="mt-6">
+    <div class="rounded-2xl bg-emerald-800 text-white p-6 shadow-lg">
+      <p class="arab !bg-transparent !border-0 !text-center !text-3xl !p-0 !m-0" style="text-align:center">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</p>
+      <h1 class="text-2xl font-extrabold mt-3 text-center">Kuis Pendidikan Agama Islam</h1>
+      <p class="text-emerald-100 text-center" id="judulSekolah"></p>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-6 mt-4 space-y-4">
+      <div>
+        <label class="font-semibold" for="nama">Nama lengkap</label>
+        <input id="nama" type="text" autocomplete="off" class="w-full mt-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-emerald-600">
+      </div>
+      <div>
+        <label class="font-semibold" for="absen">Nomor absen</label>
+        <input id="absen" type="number" min="1" inputmode="numeric" class="w-full mt-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-emerald-600">
+      </div>
+      <div>
+        <label class="font-semibold" for="kelas">Tingkat kelas</label>
+        <select id="kelas" class="w-full mt-1 border border-slate-300 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <option value="">Pilih kelas</option>
+          <option value="7">Kelas 7 (Kelas 1)</option>
+          <option value="8">Kelas 8 (Kelas 2)</option>
+          <option value="9">Kelas 9 (Kelas 3)</option>
+        </select>
+      </div>
+      <button id="btnMulai" disabled class="w-full bg-emerald-700 text-white font-bold rounded-lg p-3 disabled:bg-slate-300 disabled:cursor-not-allowed hover:bg-emerald-800">Mulai Mengerjakan</button>
+    </div>
+  </section>
+
+  <!-- Halaman kuis -->
+  <section id="s-kuis" class="hidden">
+    <div class="sticky top-0 z-10 bg-emerald-800 text-white rounded-b-xl px-4 py-3 shadow">
+      <div class="font-bold" id="idNama"></div>
+      <div class="text-sm text-emerald-100" id="idDetail"></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-5 mt-4">
+      <div class="text-sm text-slate-500" id="noSoal"></div>
+      <p class="text-lg font-semibold mt-1" id="teksSoal"></p>
+      <div id="arabSoal"></div>
+      <div id="opsiSoal" class="mt-3 space-y-2"></div>
+      <div class="flex justify-between mt-5 gap-3">
+        <button id="btnPrev" class="px-4 py-2 rounded-lg bg-slate-200 font-semibold disabled:opacity-40">Sebelumnya</button>
+        <button id="btnNext" class="px-4 py-2 rounded-lg bg-emerald-700 text-white font-semibold">Berikutnya</button>
+        <button id="btnSelesai" class="hidden px-4 py-2 rounded-lg bg-sky-700 text-white font-bold">Selesai &amp; Kirim Jawaban</button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow p-4 mt-4">
+      <div class="font-semibold mb-2">Navigasi soal <span class="text-sm font-normal text-slate-500" id="progres"></span></div>
+      <div id="navGrid" class="grid grid-cols-5 sm:grid-cols-10 gap-2"></div>
+    </div>
+  </section>
+
+  <!-- Halaman hasil -->
+  <section id="s-hasil" class="hidden mt-6">
+    <div class="rounded-2xl bg-emerald-800 text-white p-6 text-center shadow-lg">
+      <div id="hasilIdentitas" class="text-emerald-100"></div>
+      <div class="text-6xl font-extrabold my-2" id="skor"></div>
+      <div class="text-xl font-bold" id="predikat"></div>
+      <div class="mt-3 flex justify-center gap-6">
+        <div><div class="text-2xl font-bold" id="jmlBenar"></div><div class="text-sm text-emerald-100">Benar</div></div>
+        <div><div class="text-2xl font-bold" id="jmlSalah"></div><div class="text-sm text-emerald-100">Salah</div></div>
+      </div>
+      <p id="statusKirim" class="text-sm text-emerald-100 mt-3"></p>
+    </div>
+    <div class="flex flex-wrap gap-3 mt-4">
+      <button id="btnUnduh" class="bg-sky-700 text-white font-semibold rounded-lg px-4 py-2">Download Rekap Nilai (.xlsx)</button>
+      <button id="btnCsv" class="bg-sky-100 text-sky-900 font-semibold rounded-lg px-4 py-2">Download .csv</button>
+      <button onclick="location.reload()" class="bg-slate-200 font-semibold rounded-lg px-4 py-2">Kembali ke awal</button>
+    </div>
+    <h2 class="text-xl font-extrabold mt-6">Pembahasan</h2>
+    <div id="review" class="space-y-4 mt-3"></div>
+  </section>
+</main>
+
+<!-- ============================================================
+  4. LOGIKA
+============================================================ -->
+<script>
+const $ = id => document.getElementById(id);
+const HURUF = ["A","B","C","D"];
+// Mencegah teks siswa disisipkan sebagai HTML
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let siswa = {}, soal = [], jawab = [], idx = 0, barisTerakhir = null;
+$("judulSekolah").textContent = NAMA_SEKOLAH;
+
+// ---- Formulir: tombol aktif hanya jika semua terisi
+function cekForm() {
+  $("btnMulai").disabled = !($("nama").value.trim() && $("absen").value && $("kelas").value);
+}
+["nama","absen","kelas"].forEach(id => { $(id).addEventListener("input", cekForm); $(id).addEventListener("change", cekForm); });
+
+$("btnMulai").onclick = () => {
+  const k = $("kelas").value;
+  soal = BANK[k];
+  if (!soal.length) return alert("Bank soal kelas ini masih kosong.");
+  siswa = { nama:$("nama").value.trim(), absen:$("absen").value, kelas:LABEL_KELAS[k] };
+  jawab = new Array(soal.length).fill(null);
+  idx = 0;
+  $("idNama").textContent = siswa.nama;
+  $("idDetail").textContent = siswa.kelas + " • No. Absen " + siswa.absen;
+  $("s-awal").classList.add("hidden");
+  $("s-kuis").classList.remove("hidden");
+  window.scrollTo(0,0);
+  tampil();
+};
+
+// ---- Menampilkan satu soal
+function tampil() {
+  const s = soal[idx];
+  $("noSoal").textContent = `Soal ${idx+1} dari ${soal.length}`;
+  $("teksSoal").textContent = s.q;
+  $("arabSoal").innerHTML = s.arab ? `<div class="arab">${esc(s.arab)}</div>` : "";
+  $("opsiSoal").innerHTML = "";
+  s.opsi.forEach((o,i) => {
+    const b = document.createElement("button");
+    const aktif = jawab[idx] === i;
+    b.className = "w-full text-left rounded-lg border p-3 flex gap-3 " +
+      (aktif ? "border-emerald-700 bg-emerald-50 ring-2 ring-emerald-600" : "border-slate-300 hover:bg-slate-50");
+    b.innerHTML = `<span class="font-bold">${HURUF[i]}.</span><span>${esc(o)}</span>`;
+    b.onclick = () => { jawab[idx] = i; tampil(); };
+    $("opsiSoal").appendChild(b);
+  });
+  const akhir = idx === soal.length - 1;
+  $("btnPrev").disabled = idx === 0;
+  $("btnNext").classList.toggle("hidden", akhir);
+  $("btnSelesai").classList.toggle("hidden", !akhir);
+  buatNav();
+}
+
+function buatNav() {
+  $("navGrid").innerHTML = "";
+  soal.forEach((_, i) => {
+    const b = document.createElement("button");
+    const sudah = jawab[i] !== null;
+    b.textContent = i+1;
+    b.className = "rounded-md py-2 text-sm font-bold " +
+      (sudah ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700") +
+      (i === idx ? " ring-2 ring-offset-1 ring-sky-600" : "");
+    b.onclick = () => { idx = i; tampil(); };
+    $("navGrid").appendChild(b);
+  });
+  $("progres").textContent = `(${jawab.filter(j => j !== null).length}/${soal.length} terjawab)`;
+}
+
+$("btnPrev").onclick = () => { if (idx > 0) { idx--; tampil(); } };
+$("btnNext").onclick = () => { if (idx < soal.length-1) { idx++; tampil(); } };
+
+// ---- Selesai: konfirmasi jika ada yang kosong
+$("btnSelesai").onclick = () => {
+  const kosong = jawab.filter(j => j === null).length;
+  const pesan = kosong ? `Masih ada ${kosong} soal yang belum dijawab. Tetap kirim jawaban?` : "Kirim jawaban sekarang?";
+  if (confirm(pesan)) selesai();
+};
+
+function predikat(n) {
+  if (n >= 90) return "Sangat Baik";
+  if (n >= 75) return "Baik";
+  if (n >= 60) return "Cukup";
+  return "Perlu Bimbingan";
+}
+
+function selesai() {
+  const benar = soal.filter((s,i) => jawab[i] === s.kunci).length;
+  const salah = soal.length - benar;
+  const nilai = Math.round(benar * 100 / soal.length * 10) / 10; // 50 soal => 2 poin/soal
+  barisTerakhir = {
+    "Waktu Selesai": new Date().toLocaleString("id-ID"),
+    "Nama Siswa": siswa.nama, "Kelas": siswa.kelas, "Nomor Absen": Number(siswa.absen),
+    "Jumlah Benar": benar, "Jumlah Salah": salah, "Nilai Akhir": nilai
+  };
+  // Simpan di perangkat ini (untuk rekap Opsi A jika satu laptop dipakai bergantian)
+  try {
+    const arsip = JSON.parse(localStorage.getItem("rekapPAI") || "[]");
+    arsip.push(barisTerakhir);
+    localStorage.setItem("rekapPAI", JSON.stringify(arsip));
+  } catch(e) {}
+  kirimKeSheets(barisTerakhir);
+
+  $("s-kuis").classList.add("hidden");
+  $("s-hasil").classList.remove("hidden");
+  window.scrollTo(0,0);
+  $("hasilIdentitas").textContent = `${siswa.nama} • ${siswa.kelas} • No. ${siswa.absen}`;
+  $("skor").textContent = nilai;
+  $("predikat").textContent = "Predikat: " + predikat(nilai);
+  $("jmlBenar").textContent = benar;
+  $("jmlSalah").textContent = salah;
+  buatReview();
+}
+
+// ---- Pembahasan
+function buatReview() {
+  $("review").innerHTML = soal.map((s,i) => {
+    const pilih = jawab[i], benar = pilih === s.kunci;
+    const opsi = s.opsi.map((o,j) => {
+      let kelas = "border-slate-200";
+      if (j === s.kunci) kelas = "border-emerald-600 bg-emerald-50";
+      else if (j === pilih) kelas = "border-red-500 bg-red-50";
+      return `<div class="border rounded-lg p-2 ${kelas}"><b>${HURUF[j]}.</b> ${esc(o)}</div>`;
+    }).join("");
+    return `<div class="bg-white rounded-2xl shadow p-4 border-l-8 ${benar ? "border-emerald-600" : "border-red-500"}">
+      <div class="font-bold">${i+1}. ${esc(s.q)}</div>
+      ${s.arab ? `<div class="arab">${esc(s.arab)}</div>` : ""}
+      <div class="grid gap-2 mt-2">${opsi}</div>
+      <p class="mt-2 text-sm">Jawabanmu: <b class="${benar ? "text-emerald-700" : "text-red-600"}">${pilih === null ? "Tidak dijawab" : HURUF[pilih]} ${benar ? "(benar)" : "(salah)"}</b> • Kunci: <b>${HURUF[s.kunci]}</b></p>
+      <p class="mt-1 text-sm bg-sky-50 rounded-lg p-2"><b>Pembahasan:</b> ${esc(s.bahas)}</p>
+    </div>`;
+  }).join("");
+}
+
+// ---- Opsi B: kirim otomatis ke Google Sheets
+function kirimKeSheets(baris) {
+  const st = $("statusKirim");
+  if (!URL_GOOGLE_SHEETS) { st.textContent = ""; return; }
+  st.textContent = "Mengirim nilai ke guru...";
+  fetch(URL_GOOGLE_SHEETS, {
+    method: "POST", mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(baris)
+  }).then(() => st.textContent = "Nilai sudah terkirim ke guru.")
+    .catch(() => st.textContent = "Nilai belum terkirim. Periksa koneksi internet.");
+}
+
+// ---- Opsi A: unduh rekap (semua hasil yang tersimpan di perangkat ini)
+function dataRekap() {
+  try { return JSON.parse(localStorage.getItem("rekapPAI") || "[]"); } catch(e) { return [barisTerakhir]; }
+}
+$("btnUnduh").onclick = () => {
+  const ws = XLSX.utils.json_to_sheet(dataRekap());
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap Nilai");
+  XLSX.writeFile(wb, "Rekap_Nilai_PAI.xlsx");
+};
+$("btnCsv").onclick = () => {
+  const ws = XLSX.utils.json_to_sheet(dataRekap());
+  const blob = new Blob(["\ufeff" + XLSX.utils.sheet_to_csv(ws)], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "Rekap_Nilai_PAI.csv"; a.click();
+};
+</script>
+</body>
+</html>
